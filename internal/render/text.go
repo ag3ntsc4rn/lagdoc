@@ -66,7 +66,7 @@ func Text(w io.Writer, r Report, color bool) error {
 	}
 
 	if causes > 0 {
-		fmt.Fprintf(&b, "\n→ run %s to preview %s\n", t.paint(t.command, "lagdoc fix"), plural(causes, "fix"))
+		fmt.Fprintf(&b, "\n→ run %s to see what can be done\n", t.paint(t.command, "lagdoc fix"))
 	}
 
 	_, err := io.WriteString(w, indent(b.String(), "  "))

@@ -34,6 +34,9 @@ jobs:
       # The runs above saved records, so this compares with a real one.
       - run: go run . changes --json
       - run: go run . changes --no-color --since 0
+      # Preview only: --json and --dry-run never run a fix.
+      - run: go run . fix --json
+      - run: go run . fix --dry-run --no-color
 
   release-config:
     runs-on: ubuntu-latest
