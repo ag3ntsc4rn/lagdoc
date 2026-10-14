@@ -69,3 +69,11 @@ const (
 	// ChangesTopN is how many heavy apps are listed at most.
 	ChangesTopN = 5
 )
+
+// Fixes (`lagdoc fix`).
+const (
+	// A cache smaller than this isn't worth offering to clear.
+	CacheNotable = 500e6
+	// Trash, Downloads and system caches are mentioned from this size.
+	FolderNotable = 1 * gb
+)

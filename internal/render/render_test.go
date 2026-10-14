@@ -50,7 +50,7 @@ func TestTextPlain(t *testing.T) {
   ✓ cpu       ██░░░░░░░░  23%  mostly idle
   ✓ network   dns 12 ms
 
-  → run lagdoc fix to preview 2 fixes
+  → run lagdoc fix to see what can be done
 
 `
 	if got := buf.String(); got != want {

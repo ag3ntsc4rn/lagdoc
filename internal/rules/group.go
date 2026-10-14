@@ -81,7 +81,8 @@ func topBy[T cmp.Ordered](gs []AppGroup, metric func(AppGroup) T, min T, n int) 
 	return out
 }
 
-func (g AppGroup) label() string {
+// Label is the name as findings show it: "Google Chrome (23 processes)".
+func (g AppGroup) Label() string {
 	if g.Count > 1 {
 		return fmt.Sprintf("%s (%d processes)", g.Name, g.Count)
 	}

@@ -6,6 +6,12 @@ import (
 	"github.com/ag3ntsc4rn/lagdoc/internal/collect"
 )
 
+// TopCPUApps are the apps the CPU finding names: up to TopN using at least
+// CPUProcNotable of a core, busiest first.
+func TopCPUApps(ps []collect.Process) []AppGroup {
+	return topBy(GroupByApp(ps), func(g AppGroup) float64 { return g.CPUPercent }, CPUProcNotable, TopN)
+}
+
 func CPU(s collect.Snapshot) Finding {
 	if s.CPU.Sample == 0 {
 		return unknown(CheckCPU, s, "cpu")
@@ -20,8 +26,8 @@ func CPU(s collect.Snapshot) Finding {
 	case p >= CPUSomeLoadPercent:
 		f.Summary = "some load"
 	}
-	for _, g := range topBy(GroupByApp(s.Processes), func(g AppGroup) float64 { return g.CPUPercent }, CPUProcNotable, TopN) {
-		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.label(), cores(g.CPUPercent)))
+	for _, g := range TopCPUApps(s.Processes) {
+		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.Label(), cores(g.CPUPercent)))
 	}
 	return f
 }

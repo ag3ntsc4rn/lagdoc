@@ -17,7 +17,8 @@ func DiskPercent(d collect.Disk) float64 {
 	return float64(d.Total-free) / float64(d.Total) * 100
 }
 
-func diskSeverity(d collect.Disk) Severity {
+// DiskSeverity judges one volume.
+func DiskSeverity(d collect.Disk) Severity {
 	p, free := DiskPercent(d), float64(d.Free)
 	switch {
 	case (p >= DiskWarnPercent && free < DiskCritFree) || (p >= DiskCritPercent && free < DiskCritFreeUpTo):
@@ -41,7 +42,7 @@ func Disk(s collect.Snapshot) Finding {
 	}
 	var js []judged
 	for _, d := range s.Disks {
-		js = append(js, judged{d, diskSeverity(d), DiskPercent(d)})
+		js = append(js, judged{d, DiskSeverity(d), DiskPercent(d)})
 	}
 	slices.SortStableFunc(js, func(a, b judged) int {
 		if a.sev != b.sev {
