@@ -20,9 +20,9 @@ func DiskPercent(d collect.Disk) float64 {
 func diskSeverity(d collect.Disk) Severity {
 	p, free := DiskPercent(d), float64(d.Free)
 	switch {
-	case free < DiskCritFree || (p >= DiskCritPercent && free < DiskCritFreeUpTo):
+	case (p >= DiskWarnPercent && free < DiskCritFree) || (p >= DiskCritPercent && free < DiskCritFreeUpTo):
 		return Crit
-	case free < DiskWarnFree || (p >= DiskWarnPercent && free < DiskWarnFreeUpTo):
+	case (p >= DiskLowFreeFrom && free < DiskWarnFree) || (p >= DiskWarnPercent && free < DiskWarnFreeUpTo):
 		return Warn
 	}
 	return OK

@@ -25,14 +25,16 @@ const (
 )
 
 // Disk: a volume is judged by free space, with a percentage guard so a big
-// data drive at 90 % with hundreds of GB free isn't called full.
+// data drive at 90 % with hundreds of GB free isn't called full, and a
+// small one (a 1 GB /boot) isn't called full just for having under 2 GB.
 const (
 	DiskWarnPercent  = 90.0
 	DiskWarnFreeUpTo = 50 * gb // ≥ DiskWarnPercent only warns below this much free
-	DiskWarnFree     = 10 * gb // always warn below this
+	DiskWarnFree     = 10 * gb // warns below this much free once the volume is ≥ DiskLowFreeFrom full
 	DiskCritPercent  = 95.0
 	DiskCritFreeUpTo = 20 * gb
-	DiskCritFree     = 2 * gb
+	DiskCritFree     = 2 * gb // crit below this once the volume is ≥ DiskWarnPercent full
+	DiskLowFreeFrom  = 80.0
 )
 
 // CPU: whole-machine use over the ~1 s sample.

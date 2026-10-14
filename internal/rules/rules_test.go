@@ -145,6 +145,10 @@ func TestDiskThresholds(t *testing.T) {
 		{"96% with 10 GB", 250 * gb, 10 * gb, Crit},
 		{"under 2 GB free", 4000 * gb, 1 * gb, Crit},
 		{"free > total is clamped", 100 * gb, 200 * gb, OK},
+		// Small volumes: under 2 GB free is normal for a 1 GB /boot.
+		{"small /boot, mostly empty", 923e6, 792e6, OK},
+		{"small /boot, 95% full", 923e6, 40e6, Crit},
+		{"32 GB card half empty", 32 * gb, 16 * gb, OK},
 	}
 	for _, c := range cases {
 		s := healthy()
