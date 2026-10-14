@@ -15,10 +15,14 @@ type procSample struct {
 	haveCPU    bool
 }
 
+type procName struct{ name, exe string }
+
 // readProcesses reads every process it is allowed to. Processes owned by
 // other users may be unreadable without root; those are skipped, which is
-// fine for a "what's slowing me down" view.
-func readProcesses(ctx context.Context) map[int32]procSample {
+// fine for a "what's slowing me down" view. Names are cached per PID
+// (pass an empty map for a one-off read); entries for PIDs that have gone
+// are dropped.
+func readProcesses(ctx context.Context, names map[int32]procName) map[int32]procSample {
 	pids, err := process.PidsWithContext(ctx)
 	if err != nil {
 		return nil
@@ -31,7 +35,9 @@ func readProcesses(ctx context.Context) map[int32]procSample {
 		}
 		p := &process.Process{Pid: pid}
 		s := procSample{Process: Process{PID: pid}}
-		if exe, err := p.ExeWithContext(ctx); err == nil && exe != "" {
+		if n, ok := names[pid]; ok {
+			s.Name, s.Exe = n.name, n.exe
+		} else if exe, err := p.ExeWithContext(ctx); err == nil && exe != "" {
 			s.Exe = exe
 			s.Name = filepath.Base(exe)
 		} else if name, err := p.NameWithContext(ctx); err == nil {
@@ -39,6 +45,7 @@ func readProcesses(ctx context.Context) map[int32]procSample {
 		} else {
 			continue
 		}
+		names[pid] = procName{s.Name, s.Exe}
 		if mi, err := p.MemoryInfoWithContext(ctx); err == nil {
 			s.RSS = mi.RSS
 		}
@@ -47,6 +54,11 @@ func readProcesses(ctx context.Context) map[int32]procSample {
 			s.haveCPU = true
 		}
 		out[pid] = s
+	}
+	for pid := range names {
+		if _, ok := out[pid]; !ok {
+			delete(names, pid)
+		}
 	}
 	return out
 }
