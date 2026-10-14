@@ -31,6 +31,9 @@ jobs:
       # platform fails here rather than on someone's machine.
       - run: go run . --json
       - run: go run . --no-color
+      # The runs above saved records, so this compares with a real one.
+      - run: go run . changes --json
+      - run: go run . changes --no-color --since 0
 
   release-config:
     runs-on: ubuntu-latest
