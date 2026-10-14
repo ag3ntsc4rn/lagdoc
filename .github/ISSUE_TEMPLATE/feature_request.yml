@@ -1,0 +1,30 @@
+name: Feature request
+description: Suggest a check, a fix or an improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        lagdoc gives a verdict, not a dashboard. Ideas that help it explain *why* a machine is slow fit best; showing more numbers usually doesn't.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What slowdown or question should lagdoc answer?
+      description: Describe the situation, not just the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should lagdoc say or do?
+      description: The verdict line or fix you'd like to see, and how it would be detected.
+    validations:
+      required: true
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platforms
+      options:
+        - label: macOS
+        - label: Linux
+        - label: Windows
