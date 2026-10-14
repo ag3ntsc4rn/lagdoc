@@ -68,7 +68,7 @@ func Disk(s collect.Snapshot) Finding {
 		if len(f.Details) == TopN || (worst.sev > OK && j.sev == OK) {
 			break
 		}
-		f.Details = append(f.Details, fmt.Sprintf("%s %s free of %s", j.Mount, diskSize(j.Free), diskSize(j.Total)))
+		f.Details = append(f.Details, fmt.Sprintf("%s %s free of %s", j.Mount, DiskSize(j.Free), DiskSize(j.Total)))
 	}
 	return f
 }

@@ -58,13 +58,13 @@ func Memory(s collect.Snapshot) Finding {
 	}
 
 	for _, g := range topBy(GroupByApp(s.Processes), func(g AppGroup) uint64 { return g.RSS }, MemProcNotable, TopN) {
-		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.label(), memSize(g.RSS)))
+		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.label(), MemSize(g.RSS)))
 	}
 	if m.SwapUsed >= SwapNotable {
-		f.Details = append(f.Details, fmt.Sprintf("swap in use %s", memSize(m.SwapUsed)))
+		f.Details = append(f.Details, fmt.Sprintf("swap in use %s", MemSize(m.SwapUsed)))
 	}
 	if m.Compressed >= SwapNotable {
-		f.Details = append(f.Details, fmt.Sprintf("compressed %s", memSize(m.Compressed)))
+		f.Details = append(f.Details, fmt.Sprintf("compressed %s", MemSize(m.Compressed)))
 	}
 	return f
 }
