@@ -17,7 +17,7 @@ Tools like btop and glances show you every number and leave the diagnosis to you
   ✓ cpu       ██░░░░░░░░  23%  mostly idle
   ✓ network   dns 12 ms
 
-  → run lagdoc fix to preview 2 fixes
+  → run lagdoc fix to see what can be done
 ```
 
 One static binary for macOS, Linux and Windows (amd64 and arm64). No daemon, no config, no root needed.
@@ -45,6 +45,7 @@ lagdoc              # the verdict
 lagdoc --json       # the same findings as JSON, for scripts and AI agents
 lagdoc --no-color   # plain text
 lagdoc changes      # what's different since an earlier run
+lagdoc fix          # what could help, then asks before doing each one
 ```
 
 A run takes about a second, because CPU use is measured over a one-second sample.
@@ -63,6 +64,45 @@ Colour is used only for severity (red = critical, amber = warning, green = fine)
 All thresholds are in one file: [`internal/rules/thresholds.go`](internal/rules/thresholds.go).
 
 **On macOS**, "memory used" is misleading: macOS fills spare RAM with cache and compressed pages on purpose. lagdoc uses the kernel's memory pressure figure instead, the same number `memory_pressure` reports and Activity Monitor graphs.
+
+## Fixing things
+
+`lagdoc fix` lists what could help with each problem, then asks before running each one (the answer defaults to no):
+
+```
+  lagdoc fix · studio
+
+  2 fixes lagdoc can run · 2 for you to do
+
+  ✖ memory · under heavy pressure
+    1 Quit Google Chrome (23 processes), using 4.1 GB
+      Asks it to quit, as ⌘Q would; it can still ask you to save open work.
+
+  ▲ disk · getting full
+    2 Clear Go's build cache, about 6.3 GB
+      runs go clean -cache
+      Builds and tests are slower until it fills again. Downloaded modules are kept.
+    · Empty the Trash, which holds 3.4 GB
+      Only if you don't need what's in it. lagdoc never deletes your files.
+    · Look through Downloads, which holds 12 GB
+      └ Xcode_26.xip 7.9 GB
+
+  Run 1, quit Google Chrome? [y/N/q]
+```
+
+lagdoc itself only does two kinds of thing:
+
+- **Asks an app to quit**, the way its own Quit would, so it can still ask you to save your work. On macOS that's a normal Quit request (macOS may ask once whether your terminal may control the app); on Windows, `taskkill` without `/F`; on Linux, SIGTERM. It's only offered for your own apps: never for system processes, other users' processes, or the app you're running lagdoc in.
+- **Runs a tool's own cache cleanup**, for caches on the volume that's full: `go clean -cache`, `brew cleanup --prune=all`, `npm cache clean --force`, `pip cache purge` and `docker builder prune --force` (images, containers and volumes are kept). Each is shown with its size before you're asked.
+
+It never deletes files itself and never runs anything as administrator. Steps that would need either (emptying the Trash, looking through Downloads, `sudo apt-get clean`, shrinking the systemd journal, flushing the DNS cache on macOS or Linux) are listed for you to do yourself. On Windows, flushing the DNS cache (`ipconfig /flushdns`) needs no admin rights, so lagdoc can run it.
+
+```sh
+lagdoc fix --dry-run   # only show the fixes
+lagdoc fix --json      # the fixes as JSON; never runs anything
+```
+
+Fixes are only offered to run when lagdoc is in a terminal; piped or scripted, it only previews.
 
 ## What changed?
 
@@ -142,11 +182,12 @@ Use `--no-save` to run without saving, or delete the folder to clear the history
 - Findings are ranked worst first.
 - `percent` is left out for checks that have no single percentage.
 
+`lagdoc fix --json` has its own `schema_version` too. Each fix has a stable `id` (`quit:<app>`, `cache:go`, `trash`, …), `manual` (true: for you to do, never run by lagdoc), `command` (what lagdoc would run, `""` for quits and manual fixes), `steps`, and `frees_bytes` (an estimate, 0 if unknown).
+
 `lagdoc changes --json` has its own `schema_version`. `since` is when the record it compared with was taken (`null` if there wasn't one yet); every list is an array, empty when nothing changed; `disks[].used_change_bytes` is negative when space was freed; `heavy_apps[].before` is `null` if the app wasn't running then, and `reasons` says whether `memory`, `cpu` or both made it count.
 
 ## Roadmap
 
-- `lagdoc fix`: safe, targeted fixes, previewed first and confirmed before anything is done; never deletes your files
 - `lagdoc top` and `lagdoc watch`: live views
 - `lagdoc mcp`: findings as an MCP server for AI agents
 
