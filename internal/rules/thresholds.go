@@ -55,3 +55,17 @@ const (
 
 // TopN is how many processes or mounts a finding names at most.
 const TopN = 3
+
+// Changes (`lagdoc changes`): what's worth reporting between two runs.
+const (
+	// A volume whose used space moved by at least this much.
+	DiskChangeNotable = 5 * gb
+	// An app is heavy at this much memory or this share of one core, and
+	// counts as newly heavy if that's at least double what it was. Memory
+	// growth of HeavyAppGrowth counts too, even if it isn't double.
+	HeavyAppMem    = 500 << 20
+	HeavyAppCPU    = 50.0
+	HeavyAppGrowth = 1 << 30
+	// ChangesTopN is how many heavy apps are listed at most.
+	ChangesTopN = 5
+)
