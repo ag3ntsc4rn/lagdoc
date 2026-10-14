@@ -32,8 +32,9 @@ Allowed: gopsutil/v4, cobra, lipgloss (v1; bubbletea later for live views), gore
 - `main` is protected. Never commit or push to it. Branch, push, `gh pr create`, wait for CI (`ci` check) and the owner's approval.
 - Commits use the GitHub noreply identity (`19154062+ag3ntsc4rn@users.noreply.github.com`), never a personal email. Check `git config user.email` in a fresh clone.
 - Small, logical commits. `go build ./...`, `go vet ./...`, `go test ./...` and `gofmt -l .` must be clean.
-- Every GitHub Action is pinned to a full commit SHA with its version in a comment.
-- Releases: tag `vX.Y.Z` on `main`; `.github/workflows/release.yml` runs goreleaser.
+- Every GitHub Action is pinned to a full commit SHA with its version in a comment; `workflows_test.go` enforces it. Dependabot bumps Go modules and actions weekly, minor/patch grouped.
+- Releases: tag `vX.Y.Z` on `main` when something notable ships; `.github/workflows/release.yml` runs goreleaser (generated notes). `lagdoc --version` shows the goreleaser-stamped version, or Go's build info for `go install` and local builds (`cmd/version.go`).
+- Repo hygiene: `SECURITY.md` (GitHub private vulnerability reporting only, 7-day acknowledgement, safe harbour, no bounty but credit), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant; reports go through GitHub's private reporting form, titled "Code of conduct". lagdoc has no email address: never add one, the owner keeps personal email private), issue forms (blank issues off; security goes to private reporting) and a PR template. Repo settings: private vulnerability reporting, secret scanning + push protection, Dependabot alerts and security updates, CodeQL default setup; labels `security`, `dependencies`, `checks`, `platform`.
 
 ## Milestones
 
