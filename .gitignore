@@ -1,0 +1,15 @@
+# Build output
+/lagdoc
+/lagdoc.exe
+/dist/
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
