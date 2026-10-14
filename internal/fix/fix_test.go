@@ -3,6 +3,7 @@ package fix
 import (
 	"context"
 	"errors"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -161,7 +162,16 @@ var (
 	spare = collect.Disk{Mount: "/Volumes/Data", Total: 2e12, Free: 1e12}
 )
 
+// skipOnWindowsHost skips tests that use macOS or Linux paths: Plan joins
+// paths with the host's separator, so they only line up on a Unix host.
+func skipOnWindowsHost(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses Unix paths")
+	}
+}
+
 func TestDiskCaches(t *testing.T) {
+	skipOnWindowsHost(t)
 	env := mac()
 	env.tools = []string{"go", "npm", "brew", "pip3", "docker"}
 	env.sizes = map[string]uint64{
@@ -197,6 +207,7 @@ func TestDiskCaches(t *testing.T) {
 }
 
 func TestDiskCachesNeedTheTool(t *testing.T) {
+	skipOnWindowsHost(t)
 	env := mac()
 	env.sizes = map[string]uint64{"/Users/me/Library/Caches/go-build": 6e9}
 	s := collect.Snapshot{Disks: []collect.Disk{full}}
@@ -207,6 +218,26 @@ func TestDiskCachesNeedTheTool(t *testing.T) {
 	env.env = map[string]string{"GOCACHE": "off"}
 	if got := Plan(context.Background(), s, []rules.Finding{finding(rules.CheckDisk, rules.Crit)}, env); len(got) != 0 {
 		t.Errorf("GOCACHE=off: %v", ids(got))
+	}
+}
+
+func TestDiskCachesOnWindows(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("uses Windows paths")
+	}
+	env := fakeEnv{
+		os: "windows", home: `C:\Users\me`, cacheDir: `C:\Users\me\AppData\Local`,
+		tools: []string{"go", "npm", "brew"},
+		sizes: map[string]uint64{
+			`C:\Users\me\AppData\Local\npm-cache\_cacache`: 2e9,
+			`C:\Users\me\AppData\Local\go-build`:           3e9,
+			`C:\Users\me\AppData\Local\Homebrew`:           9e9, // no Homebrew on Windows
+		},
+	}
+	s := collect.Snapshot{Disks: []collect.Disk{{Mount: "C:", Total: 250e9, Free: 10e9}}}
+	got := Plan(context.Background(), s, []rules.Finding{finding(rules.CheckDisk, rules.Crit)}, env)
+	if !slices.Equal(ids(got), []string{"cache:go", "cache:npm", "windows-storage"}) {
+		t.Errorf("got %v", ids(got))
 	}
 }
 
