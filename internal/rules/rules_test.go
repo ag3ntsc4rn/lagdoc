@@ -308,3 +308,26 @@ func TestAppName(t *testing.T) {
 		}
 	}
 }
+
+func TestVerdict(t *testing.T) {
+	cases := []struct {
+		sevs []Severity
+		want string
+	}{
+		{[]Severity{OK, OK}, "ok"},
+		{[]Severity{OK, Unknown}, "ok"},
+		{[]Severity{Warn, OK}, "warn"},
+		{[]Severity{Warn, Crit}, "slow"},
+		{[]Severity{Unknown}, "unknown"},
+		{nil, "unknown"},
+	}
+	for _, c := range cases {
+		var fs []Finding
+		for _, s := range c.sevs {
+			fs = append(fs, Finding{Severity: s})
+		}
+		if got := Verdict(fs); got != c.want {
+			t.Errorf("Verdict(%v) = %q, want %q", c.sevs, got, c.want)
+		}
+	}
+}

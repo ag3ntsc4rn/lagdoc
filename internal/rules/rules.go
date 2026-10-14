@@ -100,3 +100,18 @@ func unknown(check string, s collect.Snapshot, section string) Finding {
 	}
 	return Finding{Check: check, Severity: Unknown, Summary: "not measured", Details: []string{why}}
 }
+
+// Verdict is the one-word answer: "slow" if anything is critical, "warn" if
+// something only needs watching, "ok" if every check passed, and "unknown"
+// if nothing could be measured.
+func Verdict(fs []Finding) string {
+	switch Worst(fs) {
+	case Crit:
+		return "slow"
+	case Warn:
+		return "warn"
+	case OK:
+		return "ok"
+	}
+	return "unknown"
+}
