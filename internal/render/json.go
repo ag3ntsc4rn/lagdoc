@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/ag3ntsc4rn/lagdoc/internal/collect"
 	"github.com/ag3ntsc4rn/lagdoc/internal/rules"
 )
 
@@ -30,6 +31,16 @@ type jsonHost struct {
 	CPUs          int    `json:"cpus"`
 }
 
+func hostJSON(h collect.Host) jsonHost {
+	return jsonHost{
+		Hostname:      h.Hostname,
+		OS:            h.OS,
+		OSName:        h.OSName,
+		UptimeSeconds: int64(h.Uptime.Seconds()),
+		CPUs:          h.CPUs,
+	}
+}
+
 // JSON writes the report with no styling. Findings keep their ranked order;
 // details are always an array and percentages have one decimal place, so
 // the output is easy to diff and to parse.
@@ -48,18 +59,16 @@ func JSON(w io.Writer, r Report) error {
 	out := jsonReport{
 		SchemaVersion: SchemaVersion,
 		TakenAt:       r.TakenAt.UTC().Truncate(time.Second),
-		Host: jsonHost{
-			Hostname:      r.Host.Hostname,
-			OS:            r.Host.OS,
-			OSName:        r.Host.OSName,
-			UptimeSeconds: int64(r.Host.Uptime.Seconds()),
-			CPUs:          r.Host.CPUs,
-		},
-		Verdict:  rules.Verdict(fs),
-		Causes:   rules.Causes(fs),
-		Findings: fs,
+		Host:          hostJSON(r.Host),
+		Verdict:       rules.Verdict(fs),
+		Causes:        rules.Causes(fs),
+		Findings:      fs,
 	}
+	return writeJSON(w, out)
+}
+
+func writeJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	return enc.Encode(out)
+	return enc.Encode(v)
 }

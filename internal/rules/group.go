@@ -88,18 +88,18 @@ func (g AppGroup) label() string {
 	return g.Name
 }
 
-// memSize formats RAM in binary units, labelled GB/MB as Activity Monitor,
+// MemSize formats RAM in binary units, labelled GB/MB as Activity Monitor,
 // Task Manager and free -h all do.
-func memSize(b uint64) string {
+func MemSize(b uint64) string {
 	if b >= gib {
 		return fmt.Sprintf("%.1f GB", float64(b)/gib)
 	}
 	return fmt.Sprintf("%d MB", b>>20)
 }
 
-// diskSize formats storage in decimal units, as Finder, Explorer and drive
+// DiskSize formats storage in decimal units, as Finder, Explorer and drive
 // labels do.
-func diskSize(b uint64) string {
+func DiskSize(b uint64) string {
 	f := float64(b)
 	switch {
 	case f >= 1e12:
