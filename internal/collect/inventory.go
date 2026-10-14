@@ -304,3 +304,12 @@ func startupFolder(dir string) ([]string, error) {
 	}
 	return out, nil
 }
+
+// BundleID is an app bundle's CFBundleIdentifier ("com.google.Chrome"), or "".
+func BundleID(app string) string {
+	data, err := readSmallFile(filepath.Join(app, "Contents", "Info.plist"))
+	if err != nil {
+		return ""
+	}
+	return plistString(data, "CFBundleIdentifier")
+}

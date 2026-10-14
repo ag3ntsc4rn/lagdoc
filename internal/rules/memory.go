@@ -20,6 +20,12 @@ func MemoryPercent(m collect.Memory) float64 {
 	return float64(m.Total-avail) / float64(m.Total) * 100
 }
 
+// TopMemoryApps are the apps the memory finding names: up to TopN using at
+// least MemProcNotable, biggest first.
+func TopMemoryApps(ps []collect.Process) []AppGroup {
+	return topBy(GroupByApp(ps), func(g AppGroup) uint64 { return g.RSS }, MemProcNotable, TopN)
+}
+
 func Memory(s collect.Snapshot) Finding {
 	m := s.Memory
 	if m.Total == 0 {
@@ -57,8 +63,8 @@ func Memory(s collect.Snapshot) Finding {
 		}
 	}
 
-	for _, g := range topBy(GroupByApp(s.Processes), func(g AppGroup) uint64 { return g.RSS }, MemProcNotable, TopN) {
-		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.label(), MemSize(g.RSS)))
+	for _, g := range TopMemoryApps(s.Processes) {
+		f.Details = append(f.Details, fmt.Sprintf("%s %s", g.Label(), MemSize(g.RSS)))
 	}
 	if m.SwapUsed >= SwapNotable {
 		f.Details = append(f.Details, fmt.Sprintf("swap in use %s", MemSize(m.SwapUsed)))
