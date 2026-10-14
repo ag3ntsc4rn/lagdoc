@@ -25,7 +25,7 @@ func newRootCmd() *cobra.Command {
 		Short: "Why is my machine slow right now?",
 		Long: "lagdoc checks memory, disk, CPU and network, and tells you in plain\n" +
 			"words what is slowing this machine down, worst cause first.",
-		Version:       version + " (" + commit + ")",
+		Version:       versionString(),
 		Args:          cobra.NoArgs,
 		SilenceUsage:  true,
 		SilenceErrors: false,

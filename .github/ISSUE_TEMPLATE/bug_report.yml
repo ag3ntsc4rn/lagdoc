@@ -1,0 +1,51 @@
+name: Bug report
+description: lagdoc crashed, or its verdict doesn't match what your machine is doing.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security problems go to [private vulnerability reporting](https://github.com/ag3ntsc4rn/lagdoc/security/advisories/new), not here.**
+
+        This issue is public. lagdoc's output includes your hostname and the names of running apps and mount points; edit out anything you'd rather not share.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which check
+      options:
+        - memory
+        - disk
+        - cpu
+        - network
+        - output (colour, layout, JSON)
+        - installing or running
+        - something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What did lagdoc say, and what did you expect?
+      description: For a wrong verdict, say what your OS's own tools showed at the time (Activity Monitor, Task Manager, `free -h`, `df -h`).
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output of `lagdoc --json`
+      render: json
+  - type: input
+    id: os
+    attributes:
+      label: OS and machine
+      placeholder: e.g. macOS 15.7 on Apple M2, 16 GB; Ubuntu 24.04 on x86-64
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `lagdoc --version`.
+      placeholder: e.g. lagdoc version 0.1.0 (1b5e4a7)
+    validations:
+      required: true
