@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"runtime/debug"
 	"testing"
 )
 
@@ -28,5 +29,22 @@ func TestFlags(t *testing.T) {
 	root.SetErr(&bytes.Buffer{})
 	if err := root.Execute(); err == nil {
 		t.Error("stray arguments should be rejected")
+	}
+}
+
+func TestFromBuildInfo(t *testing.T) {
+	info := &debug.BuildInfo{
+		Main:     debug.Module{Version: "v0.1.0"},
+		Settings: []debug.BuildSetting{{Key: "vcs.revision", Value: "1b5e4a7d8aba0199"}},
+	}
+	if v, c := fromBuildInfo(info, "dev", "none"); v != "v0.1.0" || c != "1b5e4a7" {
+		t.Errorf("go install build: got %s (%s)", v, c)
+	}
+	if v, c := fromBuildInfo(info, "0.1.0", "abcdef0"); v != "0.1.0" || c != "abcdef0" {
+		t.Errorf("release build values must win: got %s (%s)", v, c)
+	}
+	info.Main.Version = "(devel)"
+	if v, _ := fromBuildInfo(info, "dev", "none"); v != "dev" {
+		t.Errorf("a local checkout stays dev, got %s", v)
 	}
 }
