@@ -50,7 +50,7 @@ func newRootCmd() *cobra.Command {
 	root.Flags().BoolVar(&asJSON, "json", false, "print findings as JSON")
 	root.Flags().BoolVar(&noColor, "no-color", false, "don't use colour (also off when NO_COLOR is set or output isn't a terminal)")
 	root.PersistentFlags().BoolVar(&noSave, "no-save", false, "don't keep a record of this run for lagdoc changes")
-	root.AddCommand(newChangesCmd(&noSave), newFixCmd())
+	root.AddCommand(newChangesCmd(&noSave), newFixCmd(), newTopCmd(), newWatchCmd())
 	return root
 }
 
