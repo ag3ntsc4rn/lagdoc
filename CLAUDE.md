@@ -8,10 +8,12 @@ Differentiators: plain-language verdict; "what changed since last time" history;
 
 ```
 main.go              calls cmd.Execute()
-cmd/                 cobra wiring only (root verdict, fix placeholder)
-internal/collect/    Snapshot struct and collectors: data only, no judgement, no printing
+cmd/                 cobra wiring only (root verdict, changes, fix placeholder)
+internal/collect/    Snapshot and Inventory structs and collectors: data only, no judgement, no printing
 internal/rules/      pure Snapshot -> []Finding; all thresholds in thresholds.go
-internal/render/     text.go (lipgloss) and json.go
+internal/history/    Record (compact run summary) and Store (one gzipped JSON file per run)
+internal/changes/    pure Record, Record -> Changes
+internal/render/     text.go (lipgloss) and json.go; changes.go for lagdoc changes
 ```
 
 - Platform-specific code goes behind build tags in its own file (`memory_darwin.go` / `memory_other.go`).
@@ -21,11 +23,14 @@ internal/render/     text.go (lipgloss) and json.go
 - Disks: pseudo/network/read-only filesystems are skipped (network ones before statfs, which can hang). Mounts with identical total+free bytes are one pool (APFS container) and are shown once.
 - Verdict: `slow` if any check is crit, `warn` if only warnings, `ok`, or `unknown`.
 - Output: severity colours only (red crit, amber warn, green ok), purple brand, blue commands. Every status has a symbol (✖ ▲ ✓ ?). All styling goes through `styles.paint`, so colour off means no escape codes. Colour is off when stdout isn't a TTY, `NO_COLOR` is set, `TERM=dumb`, or `--no-color`.
-- `--json` is a stable contract: bump `render.SchemaVersion` only when a field is removed or changes meaning.
+- `--json` is a stable contract: bump `render.SchemaVersion` only when a field is removed or changes meaning. `lagdoc changes --json` has its own, `render.ChangesSchemaVersion`, with the same rule.
+- History (M2): every run (verdict and `changes`) saves a `history.Record` unless `--no-save` (a persistent root flag); a failed save is a stderr line, never a failed command. Dir: macOS `~/Library/Application Support/lagdoc/history`, Linux `$XDG_STATE_HOME` (default `~/.local/state`), Windows `%LocalAppData%`; dir 0700, files 0600, written via temp file + rename. File names are the UTC time (`20261014T203720Z.json.gz`), so listing needs no decoding. Retention (`Thin`): all for 1 h, newest per hour to 48 h, newest per UTC day to 90 days. `history.RecordVersion`: records with another version are skipped, as are corrupt ones. The inventory is read alongside the CPU sample (`collectAll`), so it adds no time.
+- `lagdoc changes --since D` (Go durations plus `7d`, default 24h) compares with the newest record at least D old, else the oldest. Startup items are keyed by source + name, apps by name (moving one between folders isn't a change), "updated" needs a version on both sides. A source that exists but can't be read goes in `Inventory.Failed`; its items are never reported as added or removed. Disks: used space moved ≥ 5 GB. Heavy apps: ≥ 500 MiB or ≥ 50 % of a core now, and at least double (or +1 GiB memory) since; top 5. Thresholds are in `rules/thresholds.go`.
+- Inventory sources only list directories and read small metadata files (Info.plist, .desktop, registry values); nothing is executed. macOS: `/Library/Launch{Daemons,Agents}`, `~/Library/LaunchAgents`, `/Applications` and `~/Applications` (one folder deep), version from Info.plist (`plist.go` reads XML and binary plists; it's fuzzed by truncation/corruption in tests). SMAppService login items are in a root-only database and aren't seen. Linux: XDG autostart, systemd `*.wants` in `/etc/systemd/{system,user}` and the user config, desktop entries incl. Flatpak/Snap exports; packages aren't listed (an upgrade changes hundreds). Windows: Run keys (HKLM, HKLM WOW6432Node, HKCU), Startup folders, Uninstall keys (skipping SystemComponent and ParentKeyName entries), via `golang.org/x/sys/windows/registry`.
 
 ## Dependencies
 
-Allowed: gopsutil/v4, cobra, lipgloss (v1; bubbletea later for live views), goreleaser (tool). Ask before adding anything else.
+Allowed: gopsutil/v4, cobra, lipgloss (v1; bubbletea later for live views), golang.org/x/sys (already a gopsutil dependency; used directly for the Windows registry), goreleaser (tool). Ask before adding anything else.
 
 ## Working agreement
 
@@ -39,7 +44,7 @@ Allowed: gopsutil/v4, cobra, lipgloss (v1; bubbletea later for live views), gore
 ## Milestones
 
 1. ✅ Verdict: `lagdoc`, `--json`, `--no-color`; memory, disk, CPU, network checks
-2. `lagdoc changes`: compact snapshots in the OS data dir; diff login items, installed apps, disk growth, new heavy processes
+2. ✅ `lagdoc changes`: compact snapshots in the OS data dir; diff login items, installed apps, disk growth, new heavy processes
 3. `lagdoc fix`: targeted actions for failed checks, preview first, confirm, never delete user files
 4. `lagdoc top` / `lagdoc watch` with bubbletea
 5. `lagdoc mcp`: findings as an MCP server
