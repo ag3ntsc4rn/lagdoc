@@ -97,7 +97,7 @@ All thresholds are in one file: [`internal/rules/thresholds.go`](internal/rules/
 
 ## Contributing
 
-Issues and pull requests are welcome. Run `go vet ./...` and `go test ./...` before opening a PR. Rules are pure functions of a snapshot, so each one is tested with a hand-built snapshot.
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md). Found a security problem? Please report it privately; see [SECURITY.md](SECURITY.md).
 
 ## License
 
