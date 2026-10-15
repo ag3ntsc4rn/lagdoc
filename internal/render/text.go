@@ -37,19 +37,32 @@ func Text(w io.Writer, r Report, color bool) error {
 	fmt.Fprintf(&b, "%s · %s · %s · up %s\n\n",
 		t.paint(t.brand, "lagdoc"), shortHost(r.Host.Hostname), r.Host.OSName, uptime(r.Host.Uptime))
 
-	causes := rules.Causes(r.Findings)
-	switch rules.Verdict(r.Findings) {
-	case "slow":
-		fmt.Fprintf(&b, "%s  %s found\n\n", t.paint(t.sev(rules.Crit).Bold(true), "SLOW"), plural(causes, "cause"))
-	case "warn":
-		fmt.Fprintf(&b, "%s  %s to watch\n\n", t.paint(t.sev(rules.Warn).Bold(true), "WARN"), plural(causes, "thing"))
-	case "ok":
-		fmt.Fprintf(&b, "%s  no problems found\n\n", t.paint(t.sev(rules.OK).Bold(true), "OK"))
-	default:
-		fmt.Fprintf(&b, "%s  nothing could be measured\n\n", t.paint(t.plain.Bold(true), "UNKNOWN"))
+	t.verdict(&b, r.Findings)
+
+	if causes := rules.Causes(r.Findings); causes > 0 {
+		fmt.Fprintf(&b, "\n→ run %s to see what can be done\n", t.paint(t.command, "lagdoc fix"))
 	}
 
-	for _, f := range r.Findings {
+	_, err := io.WriteString(w, indent(b.String(), "  "))
+	return err
+}
+
+// verdict writes the one-word verdict and a line per finding, with the
+// details of each problem.
+func (t styles) verdict(b *strings.Builder, fs []rules.Finding) {
+	causes := rules.Causes(fs)
+	switch rules.Verdict(fs) {
+	case "slow":
+		fmt.Fprintf(b, "%s  %s found\n\n", t.paint(t.sev(rules.Crit).Bold(true), "SLOW"), plural(causes, "cause"))
+	case "warn":
+		fmt.Fprintf(b, "%s  %s to watch\n\n", t.paint(t.sev(rules.Warn).Bold(true), "WARN"), plural(causes, "thing"))
+	case "ok":
+		fmt.Fprintf(b, "%s  no problems found\n\n", t.paint(t.sev(rules.OK).Bold(true), "OK"))
+	default:
+		fmt.Fprintf(b, "%s  nothing could be measured\n\n", t.paint(t.plain.Bold(true), "UNKNOWN"))
+	}
+
+	for _, f := range fs {
 		st := t.sev(f.Severity)
 		line := fmt.Sprintf("%s %-9s ", t.paint(st, symbols[f.Severity]), f.Check)
 		if f.Percent != nil {
@@ -60,17 +73,11 @@ func Text(w io.Writer, r Report, color bool) error {
 		// Details explain problems. For passing checks they'd be noise.
 		if f.Severity != rules.OK {
 			for _, d := range f.Details {
-				fmt.Fprintf(&b, "  └ %s\n", d)
+				fmt.Fprintf(b, "  └ %s\n", d)
 			}
 		}
 	}
 
-	if causes > 0 {
-		fmt.Fprintf(&b, "\n→ run %s to see what can be done\n", t.paint(t.command, "lagdoc fix"))
-	}
-
-	_, err := io.WriteString(w, indent(b.String(), "  "))
-	return err
 }
 
 type styles struct {

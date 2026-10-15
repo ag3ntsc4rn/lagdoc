@@ -78,3 +78,18 @@ func TestChangesFlags(t *testing.T) {
 		}
 	}
 }
+
+func TestLiveFlagsValidated(t *testing.T) {
+	for _, args := range [][]string{
+		{"top", "--interval", "100ms"}, {"top", "--sort", "name"},
+		{"watch", "--interval", "10ms"}, {"watch", "--count", "-1"},
+	} {
+		root := newRootCmd()
+		root.SetArgs(args)
+		root.SetOut(&bytes.Buffer{})
+		root.SetErr(&bytes.Buffer{})
+		if err := root.Execute(); err == nil {
+			t.Errorf("%v should be rejected", args)
+		}
+	}
+}

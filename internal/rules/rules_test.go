@@ -335,3 +335,21 @@ func TestVerdict(t *testing.T) {
 		}
 	}
 }
+
+func TestTransitions(t *testing.T) {
+	at := time.Date(2026, 10, 14, 14, 5, 0, 0, time.UTC)
+	a := []Finding{{Check: CheckMemory, Severity: OK, Summary: "plenty free"}, {Check: CheckDisk, Severity: OK}}
+	b := []Finding{{Check: CheckMemory, Severity: OK, Summary: "still fine"}, {Check: CheckDisk, Severity: Warn, Summary: "getting full"}}
+
+	first := Transitions(nil, a, at)
+	if len(first) != 2 || !first[0].Initial || first[0].To != OK {
+		t.Errorf("initial: %+v", first)
+	}
+	got := Transitions(a, b, at)
+	if len(got) != 1 || got[0].Check != CheckDisk || got[0].From != OK || got[0].To != Warn || got[0].Initial || got[0].Summary != "getting full" {
+		t.Errorf("got %+v", got)
+	}
+	if got := Transitions(b, b, at); len(got) != 0 {
+		t.Errorf("no change: %+v", got)
+	}
+}

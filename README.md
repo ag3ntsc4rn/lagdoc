@@ -46,6 +46,8 @@ lagdoc --json       # the same findings as JSON, for scripts and AI agents
 lagdoc --no-color   # plain text
 lagdoc changes      # what's different since an earlier run
 lagdoc fix          # what could help, then asks before doing each one
+lagdoc top          # live: apps by memory or CPU
+lagdoc watch        # live: the verdict, and when each check changed
 ```
 
 A run takes about a second, because CPU use is measured over a one-second sample.
@@ -103,6 +105,49 @@ lagdoc fix --json      # the fixes as JSON; never runs anything
 ```
 
 Fixes are only offered to run when lagdoc is in a terminal; piped or scripted, it only previews.
+
+## Live views
+
+`lagdoc top` lists apps by memory (or CPU, press `c`), with each app's helper processes counted together, so Chrome is one line instead of thirty. It refreshes every 2 seconds (`--interval`); `↑ ↓` scroll and `q` quits. It doesn't touch the network.
+
+```
+ lagdoc top · studio · every 2s
+ ▲ disk 93%   ✓ memory 42%   ✓ cpu 11%
+
+ APP                                PROCS   MEMORY↓     CPU
+ Firefox                               19    1.5 GB      3%
+ Visual Studio Code                    20    905 MB      2%
+ Docker                                10    392 MB    152%
+```
+
+`lagdoc watch` keeps re-running the checks (every 5 seconds, `--interval`) and keeps a list of when each one changed, so you can see *when* the machine got slow, not just that it is:
+
+```
+ lagdoc watch · studio · every 5s · since 11:05
+
+ WARN  1 thing to watch
+
+ ▲ disk      █████████░  93%  getting full
+   └ / 18.4 GB free of 251 GB
+ ✓ memory    ████░░░░░░  42%  plenty free
+ ✓ cpu       ██░░░░░░░░  18%  mostly idle
+ ✓ network   dns 12 ms
+
+ changes
+ 14:05:10  ▲ disk     ok → warn · getting full
+ 13:05:10  ✓ memory   crit → ok · plenty free
+```
+
+The network check sends a DNS query and opens a connection, so `watch` repeats it only every 30 seconds.
+
+When output isn't a terminal, `top` prints the list once and `watch` writes one line per change, which makes it easy to log:
+
+```sh
+lagdoc watch > lagdoc.log                        # runs until stopped
+lagdoc watch --json --interval 1m --count 60     # an hour, as JSON lines
+```
+
+Each `--json` line has `schema_version`, `time`, `check`, `from` (`null` on the first reading), `to`, `summary` and `details`.
 
 ## What changed?
 
@@ -188,7 +233,6 @@ Use `--no-save` to run without saving, or delete the folder to clear the history
 
 ## Roadmap
 
-- `lagdoc top` and `lagdoc watch`: live views
 - `lagdoc mcp`: findings as an MCP server for AI agents
 
 ## Contributing

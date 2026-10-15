@@ -37,6 +37,10 @@ jobs:
       # Preview only: --json and --dry-run never run a fix.
       - run: go run . fix --json
       - run: go run . fix --dry-run --no-color
+      # Not a terminal here: top prints once, watch logs and stops.
+      - run: go run . top --no-color
+      - run: go run . watch --count 2 --interval 1s
+      - run: go run . watch --count 1 --json
 
   release-config:
     runs-on: ubuntu-latest
