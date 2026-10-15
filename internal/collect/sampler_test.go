@@ -29,14 +29,17 @@ func TestSamplerOnlyWaitsOnce(t *testing.T) {
 	if first.Network.DialAddr != "" {
 		t.Error("NetworkEvery 0 must not probe the network")
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	start = time.Now()
 	second := sm.Next(context.Background())
 	if d := time.Since(start); d > SampleWindow/2 {
 		t.Errorf("later samples shouldn't wait: took %v", d)
 	}
-	if second.CPU.Sample <= 0 || second.CPU.Sample > SampleWindow {
-		t.Errorf("sample window is the time since the last call: %v", second.CPU.Sample)
+	// Either a fresh reading over the time since the last call, or, when
+	// the counters haven't moved (coarse on some VMs), the last good one.
+	fresh := second.CPU.Sample > 0 && second.CPU.Sample < SampleWindow
+	if !fresh && second.CPU != first.CPU {
+		t.Errorf("want a reading since the last call or the previous one, got %+v (first %+v)", second.CPU, first.CPU)
 	}
 	if len(second.Processes) == 0 {
 		t.Error("no processes")
