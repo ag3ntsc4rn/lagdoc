@@ -41,6 +41,18 @@ jobs:
       - run: go run . top --no-color
       - run: go run . watch --count 2 --interval 1s
       - run: go run . watch --count 1 --json
+      # An MCP client's first calls, both eras: the reply must be a result.
+      - name: MCP smoke test
+        shell: bash
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"check","arguments":{"network":false},"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{}}}' \
+            '{"jsonrpc":"2.0","id":3,"method":"tools/list"}' \
+            | go run . mcp > mcp.out
+          cat mcp.out
+          test "$(grep -c '"result"' mcp.out)" = 3
+          grep -q '"isError":false' mcp.out
 
   release-config:
     runs-on: ubuntu-latest
