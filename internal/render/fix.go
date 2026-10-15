@@ -139,8 +139,8 @@ type jsonFix struct {
 	Mount   string   `json:"mount"`
 }
 
-// FixJSON lists the fixes. It never runs anything.
-func FixJSON(w io.Writer, r FixReport) error {
+// FixDoc lists the fixes as the JSON contract has them. Nothing is run.
+func FixDoc(r FixReport) any {
 	out := jsonFixReport{
 		SchemaVersion: FixSchemaVersion,
 		TakenAt:       r.TakenAt.UTC().Truncate(time.Second),
@@ -154,5 +154,8 @@ func FixJSON(w io.Writer, r FixReport) error {
 			Command: fix.CommandLine(f.Command), Steps: orEmpty(f.Steps), Frees: f.Frees, Mount: f.Mount,
 		})
 	}
-	return writeJSON(w, out)
+	return out
 }
+
+// FixJSON writes FixDoc.
+func FixJSON(w io.Writer, r FixReport) error { return writeJSON(w, FixDoc(r)) }
