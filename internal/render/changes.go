@@ -225,9 +225,9 @@ type jsonHeavyApp struct {
 	Reasons   []string   `json:"reasons"` // "memory", "cpu"
 }
 
-// ChangesJSON writes the comparison as JSON. Every list is an array, never
+// ChangesDoc is the comparison as the JSON contract has it. Every list is an array, never
 // null, and lists keep the text output's order.
-func ChangesJSON(w io.Writer, r ChangesReport) error {
+func ChangesDoc(r ChangesReport) any {
 	c := r.Changes
 	out := jsonChanges{
 		SchemaVersion: ChangesSchemaVersion,
@@ -274,7 +274,7 @@ func ChangesJSON(w io.Writer, r ChangesReport) error {
 		}
 		out.HeavyApps = append(out.HeavyApps, j)
 	}
-	return writeJSON(w, out)
+	return out
 }
 
 func orEmpty[T any](xs []T) []T {
@@ -283,3 +283,6 @@ func orEmpty[T any](xs []T) []T {
 	}
 	return xs
 }
+
+// ChangesJSON writes ChangesDoc.
+func ChangesJSON(w io.Writer, r ChangesReport) error { return writeJSON(w, ChangesDoc(r)) }

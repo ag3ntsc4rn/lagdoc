@@ -41,10 +41,10 @@ func hostJSON(h collect.Host) jsonHost {
 	}
 }
 
-// JSON writes the report with no styling. Findings keep their ranked order;
+// ReportDoc is the verdict as the --json contract has it, with no styling. Findings keep their ranked order;
 // details are always an array and percentages have one decimal place, so
 // the output is easy to diff and to parse.
-func JSON(w io.Writer, r Report) error {
+func ReportDoc(r Report) any {
 	fs := make([]rules.Finding, len(r.Findings))
 	for i, f := range r.Findings {
 		if f.Details == nil {
@@ -64,7 +64,7 @@ func JSON(w io.Writer, r Report) error {
 		Causes:        rules.Causes(fs),
 		Findings:      fs,
 	}
-	return writeJSON(w, out)
+	return out
 }
 
 func writeJSON(w io.Writer, v any) error {
@@ -72,3 +72,6 @@ func writeJSON(w io.Writer, v any) error {
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
 }
+
+// JSON writes ReportDoc.
+func JSON(w io.Writer, r Report) error { return writeJSON(w, ReportDoc(r)) }

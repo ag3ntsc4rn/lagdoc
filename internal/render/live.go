@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"strings"
 	"time"
 
@@ -263,4 +264,35 @@ func padLeft(s string, n int) string {
 // pad fills s with spaces to n columns (fmt's %-*s counts bytes, not columns).
 func pad(s string, n int) string {
 	return s + strings.Repeat(" ", max(0, n-lipgloss.Width(s)))
+}
+
+// TopSchemaVersion is the contract for the apps list (lagdoc mcp's
+// top_apps tool).
+const TopSchemaVersion = 1
+
+type jsonTop struct {
+	SchemaVersion int       `json:"schema_version"`
+	TakenAt       time.Time `json:"taken_at"`
+	Host          jsonHost  `json:"host"`
+	Sort          string    `json:"sort"` // memory | cpu
+	Apps          []jsonApp `json:"apps"`
+}
+
+type jsonApp struct {
+	Name       string  `json:"name"`
+	Processes  int     `json:"processes"`
+	RSS        uint64  `json:"rss_bytes"`
+	CPUPercent float64 `json:"cpu_percent"` // of one core: 200 = two cores busy
+}
+
+// TopDoc is apps (already sorted and cut to length) as JSON.
+func TopDoc(r Report, apps []rules.AppGroup, sortBy string) any {
+	out := jsonTop{
+		SchemaVersion: TopSchemaVersion, TakenAt: r.TakenAt.UTC().Truncate(time.Second),
+		Host: hostJSON(r.Host), Sort: sortBy, Apps: []jsonApp{},
+	}
+	for _, g := range apps {
+		out.Apps = append(out.Apps, jsonApp{g.Name, g.Count, g.RSS, math.Round(g.CPUPercent*10) / 10})
+	}
+	return out
 }

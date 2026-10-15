@@ -181,3 +181,19 @@ func TestSavePrunes(t *testing.T) {
 		t.Errorf("old record should be pruned: %v", ts)
 	}
 }
+
+func TestParseSince(t *testing.T) {
+	good := map[string]time.Duration{
+		"24h": 24 * time.Hour, "90m": 90 * time.Minute, "7d": 7 * 24 * time.Hour, "0": 0, "0d": 0,
+	}
+	for in, want := range good {
+		if got, err := ParseSince(in); err != nil || got != want {
+			t.Errorf("%q: got %v, %v", in, got, err)
+		}
+	}
+	for _, in := range []string{"", "yesterday", "-1h", "-2d", "1.5d", "d"} {
+		if _, err := ParseSince(in); err == nil {
+			t.Errorf("%q should be rejected", in)
+		}
+	}
+}
