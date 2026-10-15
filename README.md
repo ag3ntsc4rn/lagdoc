@@ -48,6 +48,7 @@ lagdoc changes      # what's different since an earlier run
 lagdoc fix          # what could help, then asks before doing each one
 lagdoc top          # live: apps by memory or CPU
 lagdoc watch        # live: the verdict, and when each check changed
+lagdoc mcp          # an MCP server, for AI agents and editors
 ```
 
 A run takes about a second, because CPU use is measured over a one-second sample.
@@ -149,6 +150,31 @@ lagdoc watch --json --interval 1m --count 60     # an hour, as JSON lines
 
 Each `--json` line has `schema_version`, `time`, `check`, `from` (`null` on the first reading), `to`, `summary` and `details`.
 
+## For AI agents (MCP)
+
+`lagdoc mcp` is a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio, so an AI agent or editor can ask why the machine is slow. Add it to your client's MCP servers:
+
+```sh
+claude mcp add lagdoc -- lagdoc mcp          # Claude Code
+```
+
+```json
+{ "mcpServers": { "lagdoc": { "command": "lagdoc", "args": ["mcp"] } } }
+```
+
+(The second form is for clients configured with JSON, such as Claude Desktop. Use the full path to `lagdoc` if it isn't on the `PATH` the client sees.)
+
+| Tool | What it returns |
+|---|---|
+| `check` | The verdict and findings, as `lagdoc --json`. `network: false` skips the network check. |
+| `top_apps` | Apps by memory or CPU (`sort`, `limit`), helpers counted with their app. |
+| `changes` | What changed since an earlier run (`since`, default `24h`), as `lagdoc changes --json`. |
+| `fixes` | What could help, as `lagdoc fix --json`. Nothing is run. |
+
+Every tool only reads, and is marked read-only: nothing is changed and no history is saved. To apply a fix, the agent should ask you to run `lagdoc fix`, which previews each one and asks before doing it. Results come as structured content with an output schema, and as the same JSON in text for clients that don't read structured content.
+
+lagdoc speaks MCP 2026-07-28 (the protocol version on every request) and, for clients that start with `initialize`, 2025-11-25, 2025-06-18, 2025-03-26 and 2024-11-05.
+
 ## What changed?
 
 Slowness often starts with something new: an app that installed a background updater, an update, a download that filled the disk. `lagdoc changes` compares this machine now with an earlier run:
@@ -230,10 +256,6 @@ Use `--no-save` to run without saving, or delete the folder to clear the history
 `lagdoc fix --json` has its own `schema_version` too. Each fix has a stable `id` (`quit:<app>`, `cache:go`, `trash`, …), `manual` (true: for you to do, never run by lagdoc), `command` (what lagdoc would run, `""` for quits and manual fixes), `steps`, and `frees_bytes` (an estimate, 0 if unknown).
 
 `lagdoc changes --json` has its own `schema_version`. `since` is when the record it compared with was taken (`null` if there wasn't one yet); every list is an array, empty when nothing changed; `disks[].used_change_bytes` is negative when space was freed; `heavy_apps[].before` is `null` if the app wasn't running then, and `reasons` says whether `memory`, `cpu` or both made it count.
-
-## Roadmap
-
-- `lagdoc mcp`: findings as an MCP server for AI agents
 
 ## Contributing
 
