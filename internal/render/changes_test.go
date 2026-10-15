@@ -153,6 +153,9 @@ func TestChangesJSON(t *testing.T) {
 		StartupItems  struct {
 			Added []map[string]string `json:"added"`
 		} `json:"startup_items"`
+		Apps struct {
+			Updated []map[string]string `json:"updated"`
+		} `json:"apps"`
 		Disks []struct {
 			Mount string `json:"mount"`
 			Used  int64  `json:"used_change_bytes"`
@@ -169,6 +172,9 @@ func TestChangesJSON(t *testing.T) {
 	}
 	if got.SchemaVersion != ChangesSchemaVersion || got.Since == nil || *got.Since != "2026-10-12T14:03:00Z" || got.Changes != 10 || !got.Saved {
 		t.Errorf("header: %+v", got)
+	}
+	if u := got.Apps.Updated; len(u) != 1 || u[0]["name"] != "Firefox" || u[0]["from"] != "156.0" || u[0]["to"] != "157.0.1" {
+		t.Errorf("updated apps use the documented lowercase names: %+v", u)
 	}
 	if got.StartupItems.Added[0]["source"] != "/Library/LaunchDaemons" {
 		t.Errorf("startup: %+v", got.StartupItems)

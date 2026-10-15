@@ -188,15 +188,21 @@ type jsonChanges struct {
 		Removed []collect.StartupItem `json:"removed"`
 	} `json:"startup_items"`
 	Apps struct {
-		Added   []collect.App       `json:"added"`
-		Removed []collect.App       `json:"removed"`
-		Updated []changes.AppUpdate `json:"updated"`
+		Added   []collect.App   `json:"added"`
+		Removed []collect.App   `json:"removed"`
+		Updated []jsonAppUpdate `json:"updated"`
 	} `json:"apps"`
 	Disks     []jsonDiskChange `json:"disks"`
 	HeavyApps []jsonHeavyApp   `json:"heavy_apps"`
 	Unread    []string         `json:"unread"`
 	Skipped   []string         `json:"skipped"`
 	Saved     bool             `json:"saved"`
+}
+
+type jsonAppUpdate struct {
+	Name string `json:"name"`
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 type jsonDiskChange struct {
@@ -242,7 +248,10 @@ func ChangesDoc(r ChangesReport) any {
 	out.StartupItems.Removed = orEmpty(c.StartupRemoved)
 	out.Apps.Added = orEmpty(c.AppsAdded)
 	out.Apps.Removed = orEmpty(c.AppsRemoved)
-	out.Apps.Updated = orEmpty(c.AppsUpdated)
+	out.Apps.Updated = []jsonAppUpdate{}
+	for _, u := range c.AppsUpdated {
+		out.Apps.Updated = append(out.Apps.Updated, jsonAppUpdate{u.Name, u.From, u.To})
+	}
 	for _, d := range c.Disks {
 		out.Disks = append(out.Disks, jsonDiskChange{
 			Mount: d.Mount, UsedDelta: d.UsedChange(), Free: d.After.Free, Total: d.After.Total,
