@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -24,7 +21,7 @@ func newChangesCmd(noSave *bool) *cobra.Command {
 			"or removed, apps updated, disks filling up and apps that got heavy.",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			d, err := parseSince(since)
+			d, err := history.ParseSince(since)
 			if err != nil {
 				return err
 			}
@@ -61,17 +58,4 @@ func newChangesCmd(noSave *bool) *cobra.Command {
 	c.Flags().BoolVar(&asJSON, "json", false, "print changes as JSON")
 	c.Flags().BoolVar(&noColor, "no-color", false, "don't use colour")
 	return c
-}
-
-// parseSince reads a Go duration, plus whole days as "7d".
-func parseSince(s string) (time.Duration, error) {
-	if n, ok := strings.CutSuffix(s, "d"); ok {
-		days, err := strconv.Atoi(n)
-		if err == nil && days >= 0 {
-			return time.Duration(days) * 24 * time.Hour, nil
-		}
-	} else if d, err := time.ParseDuration(s); err == nil && d >= 0 {
-		return d, nil
-	}
-	return 0, fmt.Errorf("--since %q: use a length of time like 30m, 6h or 7d", s)
 }
